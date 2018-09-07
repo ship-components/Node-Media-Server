@@ -21,6 +21,6 @@ module.exports = {
     logger.debug(args);
   },
   ffdebug: (...args) => {
-    logger.debug(args);
+    logger.silly(args);
   }
 }
