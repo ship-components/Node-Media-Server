@@ -80,7 +80,7 @@ class NodeTransSession extends EventEmitter {
   }
 
   end() {
-    this.ffmpeg_exec.kill('SIGINT');
+    this.ffmpeg_exec.kill('SIGKILL');
   }
 }
 
