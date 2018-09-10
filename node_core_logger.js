@@ -18,9 +18,12 @@ module.exports = {
     logger.error(...args);
   },
   debug: (...args) => {
-    logger.debug(args);
+    logger.debug(...args);
+  },
+  warn: (...args) => {
+    logger.warn(...args);
   },
   ffdebug: (...args) => {
-    logger.silly(args);
+    logger.silly('[ffmpeg]', ...args);
   }
 }
