@@ -46,8 +46,8 @@ class NodeTransSession extends EventEmitter {
       Logger.log('[Transmuxing DASH] ' + this.conf.streamPath + ' to ' + ouPath + '/' + dashFileName);
     }
     mkdirp.sync(ouPath);
-    let argv = ['-y', '-threads', 1, '-loglevel', 'warning', '-hide_banner', '-nostats', '-nostdin', '-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-tune', 'zerolatency', '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
-    Logger.log(argv.toString());
+    let argv = ['-y', '-threads', 1, '-loglevel', 'warning', '-hide_banner', '-nostats', '-nostdin', '-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-g', 1, '-tune', 'zerolatency', '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
+    Logger.log('[ffmpeg args] ffmpeg ', argv.join(' '));
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
       Logger.error(e);
