@@ -1,5 +1,3 @@
-const Ceres = require('ceres-framework');
-
 module.exports = {
   LOG_TYPES: {
     NONE: 0,
@@ -10,18 +8,18 @@ module.exports = {
   },
   setLogType: () => undefined,
   log: (...args) => {
-    Ceres.logger('NodeMediaServer').info(...args);
+    console.log(...args);
   },
   error: (...args) => {
-    Ceres.logger('NodeMediaServer').error(...args);
+    console.log(...args);
   },
   debug: (...args) => {
-    Ceres.logger('NodeMediaServer').debug(...args);
+    console.log(...args);
   },
   warn: (...args) => {
-    Ceres.logger('NodeMediaServer').warn(...args);
+    console.log(...args);
   },
   ffdebug: (...args) => {
-    Ceres.logger('NodeMediaServer').silly('[ffmpeg]', ...args);
+    console.log('[ffmpeg]', ...args);
   }
 }
