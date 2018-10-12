@@ -21,7 +21,8 @@ class NodeTransSession extends EventEmitter {
     let vc = 'copy';
     let ac = this.conf.args.ac == 10 ? 'copy' : this.conf.ac ? this.conf.ac : 'aac';
     let inPath = 'rtmp://127.0.0.1:' + this.conf.port + this.conf.streamPath;
-    let ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}`;
+    let directory = typeof this.conf.directory === 'string' ? this.conf.directory : `${this.conf.mediaroot}/${this.conf.app}`;
+    let ouPath = `${directory}/${this.conf.stream}`;
     let mapStr = '';
     if (this.conf.mp4) {
       this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';
