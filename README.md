@@ -1,19 +1,9 @@
 # Node-Media-Server
-[![npm](https://img.shields.io/node/v/node-media-server.svg)](https://nodejs.org/en/)
-[![npm](https://img.shields.io/npm/v/node-media-server.svg)](https://npmjs.org/package/node-media-server)
-[![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
-[![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE) 
-[![Join the chat at https://gitter.im/Illuspas/Node-Media-Server](https://badges.gitter.im/Illuspas/Node-Media-Server.svg)](https://gitter.im/Illuspas/Node-Media-Server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-![logo](https://www.nodemedia.cn/uploads/site_logo.png)
+A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server. Forked from [Node Media Server](https://github.com/illuspas/Node-Media-Server).
 
-A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server  
-[中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)
+## Features
 
-**If you like this project you can support me.**  
-<a href="https://www.buymeacoffee.com/illuspas" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/white_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
-
-# Features
  - Cross platform support Windows/Linux/Unix
  - Support H.264/H.265/AAC/MP3/SPEEX/NELLYMOSER
  - Support GOP cache
@@ -27,38 +17,11 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
  - Support Server Monitor
  - Support Rtsp/Rtmp relay
  - Support multicore cluster mode
- 
- 
-# Todo 
-- [x] support record stream 
-- [x] support transcode
-- [x] support cluster
-- [x] support low latency hls
-- [x] server and streams status
-- [ ] server monitor frontend
-- [x] on_connect/on_publish/on_play/on_done event callback
-- [ ] multi resolution transcoding 
-- [ ] hardware acceleration transcoding. 
-- [x] rtmp/rtsp relay with ffmpeg
-- [ ] admin panel
-- [ ] zerolatency rtmp/rtsp relay without ffmpeg
-- [ ] support webrtc 
- 
-# Usage 
-## git version
-```bash
-mkdir nms
-cd nms
-git clone https://github.com/illuspas/Node-Media-Server
-npm i
-node app.js
-```
->Run with Multicore mode 
-```
-node cluster.js
-```
+
+## Usage
 
 ## npm version (recommended)
+
 ### Singlecore mode
 ```bash
 mkdir nms
@@ -140,7 +103,7 @@ URL : rtmp://localhost/live
 Stream key : STREAM_NAME
 
 # Accessing the live stream
-## RTMP 
+## RTMP
 ```
 rtmp://localhost/live/STREAM_NAME
 ```
@@ -242,9 +205,9 @@ nms.run();
 
 # Authentication
 ## Encryption URL consists of:
-> rtmp://hostname:port/appname/stream?sign=expires-HashValue  
-> http://hostname:port/appname/stream.flv?sign=expires-HashValue  
-> ws://hostname:port/appname/stream.flv?sign=expires-HashValue  
+> rtmp://hostname:port/appname/stream?sign=expires-HashValue
+> http://hostname:port/appname/stream.flv?sign=expires-HashValue
+> ws://hostname:port/appname/stream.flv?sign=expires-HashValue
 
 1.Publish or play address:
 >rtmp://192.168.0.10/live/stream
@@ -274,17 +237,17 @@ const config = {
 >1503458721
 
 4.The combination HashValue is:
->HashValue = md5("/live/stream-1503458721-nodemedia2017privatekey”)  
+>HashValue = md5("/live/stream-1503458721-nodemedia2017privatekey”)
 >HashValue = 80c1d1ad2e0c2ab63eebb50eed64201a
 
 5.Final request address
-> rtmp://192.168.0.10/live/stream?sign=1503458721-80c1d1ad2e0c2ab63eebb50eed64201a  
+> rtmp://192.168.0.10/live/stream?sign=1503458721-80c1d1ad2e0c2ab63eebb50eed64201a
 > The 'sign' keyword can not be modified
 
 # H.265 over RTMP
-H.265 does not appear in Adobe's official specification. Id 12 is the standard for most cloud services in China.  
-Publish or Transcode: [ffmpeg-hw-win32](#ffmpeg-hw-win32)  
-Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios)  
+H.265 does not appear in Adobe's official specification. Id 12 is the standard for most cloud services in China.
+Publish or Transcode: [ffmpeg-hw-win32](#ffmpeg-hw-win32)
+Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios)
 Pure JavaScrip live stream player: [NodePlayer.js](https://github.com/illuspas/NodePlayer.js)
 
 # Event callback
@@ -338,7 +301,7 @@ nms.on('donePlay', (id, StreamPath, args) => {
 ## Generate certificate
 ```bash
 openssl genrsa -out privatekey.pem 1024
-openssl req -new -key privatekey.pem -out certrequest.csr 
+openssl req -new -key privatekey.pem -out certrequest.csr
 openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
 ```
 
@@ -376,8 +339,8 @@ wss://localhost:8443/live/STREAM_NAME.flv
 ```
 >In the browser environment, Self-signed certificates need to be added with trust before they can be accessed.
 
-# API 
-## Protected API 
+# API
+## Protected API
 ```
 const config = {
  .......
@@ -386,7 +349,7 @@ const config = {
     api_user: 'admin',
     api_pass: 'nms2018',
   },
- 
+
  ......
 }
 ```
@@ -617,7 +580,7 @@ relay: {
 }
 ```
 
-## Dynamic pull 
+## Dynamic pull
 When the local server receives a play request.
 If the stream does not exist, pull the stream from the configured edge server to local.
 When the stream is not played by the client, it automatically disconnects.
@@ -653,10 +616,10 @@ relay: {
 ```
 
 # Thanks
-RTSP, RTMP, and HTTP server implementation in Node.js  
+RTSP, RTMP, and HTTP server implementation in Node.js
 https://github.com/iizukanao/node-rtsp-rtmp-server
 
-Node.JS module that provides an API for encoding and decoding of AMF0 and AMF3 protocols  
+Node.JS module that provides an API for encoding and decoding of AMF0 and AMF3 protocols
 https://github.com/delian/node-amfutils
 
 # Publisher and Player App/SDK

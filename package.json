@@ -1,6 +1,6 @@
 {
-  "name": "node-media-server",
-  "version": "1.5.0",
+  "name": "ship-components-media-server",
+  "version": "1.0.0",
   "description": "A Node.js implementation of RTMP Server",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/illuspas/Node-Media-Server.git"
+    "url": "git+https://github.com/ship-components/ship-components-media-server.git"
   },
   "keywords": [
     "rtmp",
@@ -16,11 +16,15 @@
     "server"
   ],
   "author": "Mingliang Chen",
+  "contributors": [
+    "Mingliang Chen",
+    "Isaac Suttell <isaac.suttell@sony.com>"
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/illuspas/Node-Media-Server/issues"
+    "url": "https://github.com/ship-components/ship-components-media-server/issues"
   },
-  "homepage": "https://github.com/illuspas/Node-Media-Server#readme",
+  "homepage": "https://github.com/ship-components/ship-components-media-server#readme",
   "dependencies": {
     "basic-auth-connect": "^1.0.0",
     "chalk": "^2.4.1",
