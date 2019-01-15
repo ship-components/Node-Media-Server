@@ -16,6 +16,15 @@ const context = require('./node_core_ctx');
 class NodeMediaServer {
   constructor(config) {
     this.config = config;
+
+    // Enable a custom logger
+    if (config.logger) {
+      ['log', 'error', 'debug', 'warn'].forEach(key => {
+        // Ensure "this" is correct
+        Logger[key] = config.logger[key].bind(config.logger);
+      });
+      Logger.ffmpeg = config.logger.debug;
+    }
   }
 
   run() {
