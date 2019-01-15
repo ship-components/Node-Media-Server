@@ -4,7 +4,10 @@
   "description": "A Node.js implementation of RTMP Server",
   "main": "index.js",
   "scripts": {
-    "test": "node app.js"
+    "test": "node app.js",
+    "prettier:cli": "prettier \"api/**/*.js\" \"*.js\"",
+    "prettier:check": "npm run prettier:cli -- -l",
+    "prettier:fix": "npm run prettier:cli -- --write"
   },
   "repository": {
     "type": "git",
@@ -36,5 +39,8 @@
   },
   "engines": {
     "node": ">=8.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^1.15.3"
   }
 }
