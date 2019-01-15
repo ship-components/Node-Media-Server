@@ -7,13 +7,13 @@ const config = {
     chunk_size: 60000,
     gop_cache: true,
     ping: 60,
-    ping_timeout: 30
+    ping_timeout: 30,
   },
   http: {
     port: 8000,
     webroot: './public',
     mediaroot: './media',
-    allow_origin: '*'
+    allow_origin: '*',
   },
   https: {
     port: 8443,
@@ -26,11 +26,11 @@ const config = {
     api_pass: 'admin',
     play: false,
     publish: false,
-    secret: 'nodemedia2017privatekey'
+    secret: 'nodemedia2017privatekey',
   },
   cluster: {
-    num: numCPUs
-  }
+    num: numCPUs,
+  },
 };
 
 let nmcs = new NodeMediaCluster(config);

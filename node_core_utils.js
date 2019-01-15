@@ -15,7 +15,7 @@ function generateNewSessionID() {
     for (let i = 0; i < 8; i++) {
       sessionID += possible.charAt((Math.random() * numPossible) | 0);
     }
-  } while (context.sessions.has(sessionID))
+  } while (context.sessions.has(sessionID));
   return sessionID;
 }
 
@@ -34,7 +34,7 @@ function verifyAuth(signStr, streamId, secretKey) {
   if (signStr === undefined) {
     return false;
   }
-  let now = Date.now() / 1000 | 0;
+  let now = (Date.now() / 1000) | 0;
   let exp = parseInt(signStr.split('-')[0]);
   let shv = signStr.split('-')[1];
   let str = streamId + '-' + exp + '-' + secretKey;

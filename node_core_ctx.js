@@ -12,6 +12,6 @@ let nodeEvent = new EventEmitter();
 let stat = {
   inbytes: 0,
   outbytes: 0,
-  accepted: 0
+  accepted: 0,
 };
 module.exports = { sessions, publishers, idlePlayers, nodeEvent, stat };

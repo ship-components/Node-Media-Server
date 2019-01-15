@@ -54,7 +54,7 @@ class NodeMediaServer {
       this.nis.run();
     }
 
-    process.on('uncaughtException', function (err) {
+    process.on('uncaughtException', function(err) {
       Logger.error('uncaughtException', err);
     });
   }
@@ -83,4 +83,4 @@ class NodeMediaServer {
   }
 }
 
-module.exports = NodeMediaServer
+module.exports = NodeMediaServer;

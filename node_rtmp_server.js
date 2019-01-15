@@ -15,11 +15,13 @@ const RTMP_PORT = 1935;
 
 class NodeRtmpServer {
   constructor(config) {
-    config.rtmp.port = this.port = config.rtmp.port ? config.rtmp.port : RTMP_PORT;
-    this.tcpServer = Net.createServer((socket) => {
+    config.rtmp.port = this.port = config.rtmp.port
+      ? config.rtmp.port
+      : RTMP_PORT;
+    this.tcpServer = Net.createServer(socket => {
       let session = new NodeRtmpSession(config, socket);
       session.run();
-    })
+    });
   }
 
   run() {
@@ -27,7 +29,7 @@ class NodeRtmpServer {
       Logger.log(`Node Media Rtmp Server started on port: ${this.port}`);
     });
 
-    this.tcpServer.on('error', (e) => {
+    this.tcpServer.on('error', e => {
       Logger.error(`Node Media Rtmp Server ${e}`);
     });
 
@@ -47,4 +49,4 @@ class NodeRtmpServer {
   }
 }
 
-module.exports = NodeRtmpServer
+module.exports = NodeRtmpServer;

@@ -7,26 +7,31 @@ const Logger = require('./node_core_logger');
 const NodeRtmpClient = require('./node_rtmp_client');
 
 class NodeIpcSession {
-
   constructor(streamPath, pullPort, pushPort) {
     this.streamPath = streamPath;
     this.app = streamPath.split('/')[1];
     this.stream = streamPath.split('/')[2];
 
     this.pullPort = pullPort;
-    this.pullRtmp = new NodeRtmpClient(`rtmp://127.0.0.1:${pullPort}${streamPath}`);
+    this.pullRtmp = new NodeRtmpClient(
+      `rtmp://127.0.0.1:${pullPort}${streamPath}`
+    );
 
     this.pushPort = pushPort;
-    this.pushRtmp = new NodeRtmpClient(`rtmp://127.0.0.1:${pushPort}${streamPath}`);
+    this.pushRtmp = new NodeRtmpClient(
+      `rtmp://127.0.0.1:${pushPort}${streamPath}`
+    );
 
     this.isStart = false;
 
-    Logger.debug(`[rtmp ipc] Create new ipc stream ${streamPath} from port=${pullPort} to port=${pushPort}`);
+    Logger.debug(
+      `[rtmp ipc] Create new ipc stream ${streamPath} from port=${pullPort} to port=${pushPort}`
+    );
   }
 
   run() {
     this.isStart = true;
-    this.pushRtmp.on('status', (info) => {
+    this.pushRtmp.on('status', info => {
       if (info.code === 'NetStream.Publish.Start') {
         this.pullRtmp.startPull();
       }
@@ -55,7 +60,6 @@ class NodeIpcSession {
 
     Logger.debug(`[rtmp ipc] Stop ipc stream ${this.streamPath}`);
   }
-
 }
 
-module.exports = NodeIpcSession
+module.exports = NodeIpcSession;

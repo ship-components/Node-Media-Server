@@ -22,14 +22,22 @@ class NodeTransServer {
       mkdirp.sync(this.config.http.mediaroot);
       fs.accessSync(this.config.http.mediaroot, fs.constants.W_OK);
     } catch (error) {
-      Logger.error(`Node Media Trans Server startup failed. MediaRoot:${this.config.http.mediaroot} cannot be written.`);
+      Logger.error(
+        `Node Media Trans Server startup failed. MediaRoot:${
+          this.config.http.mediaroot
+        } cannot be written.`
+      );
       return;
     }
 
     try {
       fs.accessSync(this.config.trans.ffmpeg, fs.constants.X_OK);
-    }catch(error) {
-      Logger.error(`Node Media Trans Server startup failed. ffmpeg:${this.config.trans.ffmpeg} cannot be executed.`);
+    } catch (error) {
+      Logger.error(
+        `Node Media Trans Server startup failed. ffmpeg:${
+          this.config.trans.ffmpeg
+        } cannot be executed.`
+      );
       return;
     }
 
@@ -41,7 +49,11 @@ class NodeTransServer {
     }
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
     context.nodeEvent.on('donePublish', this.onDonePublish.bind(this));
-    Logger.log(`Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${this.config.http.mediaroot}`);
+    Logger.log(
+      `Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${
+        this.config.http.mediaroot
+      }`
+    );
   }
 
   onPostPublish(id, streamPath, args) {

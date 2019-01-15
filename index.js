@@ -11,5 +11,5 @@ const NodeRtmpClient = require('./node_rtmp_client');
 module.exports = {
   NodeMediaCluster,
   NodeMediaServer,
-  NodeRtmpClient
+  NodeRtmpClient,
 };

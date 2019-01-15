@@ -4,7 +4,7 @@ module.exports = {
     ERROR: 1,
     NORMAL: 2,
     DEBUG: 3,
-    FFDEBUG: 4
+    FFDEBUG: 4,
   },
   setLogType: () => undefined,
   log: (...args) => {
@@ -21,5 +21,5 @@ module.exports = {
   },
   ffdebug: (...args) => {
     console.log('[ffmpeg]', ...args);
-  }
-}
+  },
+};

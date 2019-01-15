@@ -15,32 +15,43 @@ class NodeIpcServer {
     this.config = config;
     this.sessions = new Map();
     this.ipcPort = 0;
-    this.ipcServer = Net.createServer((socket) => {
+    this.ipcServer = Net.createServer(socket => {
       let session = new NodeRtmpSession(config, socket);
       session.isIPC = true;
       session.run();
-    })
+    });
   }
 
   run() {
-    this.ipcServer.listen({ port: 0, host: '127.0.0.1', exclusive: true }, () => {
-      this.ipcPort = this.ipcServer.address().port;
-      Logger.log(`Node Media IPC Server started at`, this.ipcPort);
-    });
+    this.ipcServer.listen(
+      { port: 0, host: '127.0.0.1', exclusive: true },
+      () => {
+        this.ipcPort = this.ipcServer.address().port;
+        Logger.log(`Node Media IPC Server started at`, this.ipcPort);
+      }
+    );
 
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
     context.nodeEvent.on('donePublish', this.onDonePublish.bind(this));
 
-    process.on('message', (msg) => {
+    process.on('message', msg => {
       if (this.ipcPort === msg.port) {
         Logger.debug('[rtmp ipc] Current process, ignore');
         return;
       }
 
-      Logger.debug(`[rtmp ipc] receive message from pid=${msg.pid} cmd=${msg.cmd} port=${msg.port} streamPath=${msg.streamPath}`);
+      Logger.debug(
+        `[rtmp ipc] receive message from pid=${msg.pid} cmd=${msg.cmd} port=${
+          msg.port
+        } streamPath=${msg.streamPath}`
+      );
 
       if (msg.cmd === 'postPublish') {
-        let ipcSession = new NodeIpcSession(msg.streamPath, msg.port, this.ipcPort);
+        let ipcSession = new NodeIpcSession(
+          msg.streamPath,
+          msg.port,
+          this.ipcPort
+        );
         this.sessions.set(msg.streamPath, ipcSession);
         ipcSession.run();
       } else if (msg.cmd === 'donePublish') {
@@ -48,7 +59,6 @@ class NodeIpcServer {
         ipcSession.stop();
         this.sessions.delete(msg.streamPath);
       }
-
     });
   }
 
@@ -57,13 +67,22 @@ class NodeIpcServer {
   }
 
   onPostPublish(id, streamPath, args) {
-    process.send({ cmd: 'postPublish', pid: process.pid, port: this.ipcPort, streamPath });
+    process.send({
+      cmd: 'postPublish',
+      pid: process.pid,
+      port: this.ipcPort,
+      streamPath,
+    });
   }
 
   onDonePublish(id, streamPath, args) {
-    process.send({ cmd: 'donePublish', pid: process.pid, port: this.ipcPort, streamPath });
+    process.send({
+      cmd: 'donePublish',
+      pid: process.pid,
+      port: this.ipcPort,
+      streamPath,
+    });
   }
-
 }
 
-module.exports = NodeIpcServer
+module.exports = NodeIpcServer;

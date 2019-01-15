@@ -4,7 +4,6 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 
-
 const Fs = require('fs');
 const Http = require('http');
 const Https = require('https');
@@ -24,21 +23,32 @@ const serverRoute = require('./api/routes/server');
 
 class NodeHttpServer {
   constructor(config) {
-    this.port = config.http.port = config.http.port ? config.http.port : HTTP_PORT;
-    this.webroot = config.http.webroot = config.http.webroot ? config.http.webroot : HTTP_WEBROOT;
-    this.mediaroot = config.http.mediaroot = config.http.mediaroot ? config.http.mediaroot : HTTP_MEDIAROOT;
+    this.port = config.http.port = config.http.port
+      ? config.http.port
+      : HTTP_PORT;
+    this.webroot = config.http.webroot = config.http.webroot
+      ? config.http.webroot
+      : HTTP_WEBROOT;
+    this.mediaroot = config.http.mediaroot = config.http.mediaroot
+      ? config.http.mediaroot
+      : HTTP_MEDIAROOT;
     this.config = config;
 
     let app = Express();
 
     app.all(['*.m3u8', '*.ts', '*.mpd', '*.m4s', '*.mp4'], (req, res, next) => {
-      res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
+      res.setHeader(
+        'Access-Control-Allow-Origin',
+        this.config.http.allow_origin
+      );
       next();
     });
 
-
     app.all('*.flv', (req, res, next) => {
-      res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
+      res.setHeader(
+        'Access-Control-Allow-Origin',
+        this.config.http.allow_origin
+      );
       if (req.method === 'OPTIONS') {
         res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'range');
@@ -52,13 +62,14 @@ class NodeHttpServer {
       }
     });
 
-
-
     app.use(Express.static(this.webroot));
     app.use(Express.static(this.mediaroot));
 
     if (this.config.auth && this.config.auth.api) {
-      app.use('/api/*', basicAuth(this.config.auth.api_user, this.config.auth.api_pass));
+      app.use(
+        '/api/*',
+        basicAuth(this.config.auth.api_user, this.config.auth.api_pass)
+      );
     }
     app.use('/api/streams', streamsRoute(context));
     app.use('/api/server', serverRoute(context));
@@ -67,13 +78,13 @@ class NodeHttpServer {
 
     /**
      * ~ openssl genrsa -out privatekey.pem 1024
-     * ~ openssl req -new -key privatekey.pem -out certrequest.csr 
+     * ~ openssl req -new -key privatekey.pem -out certrequest.csr
      * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
      */
     if (this.config.https) {
       let options = {
         key: Fs.readFileSync(this.config.https.key),
-        cert: Fs.readFileSync(this.config.https.cert)
+        cert: Fs.readFileSync(this.config.https.cert),
       };
       this.sport = config.https.port ? config.https.port : HTTPS_PORT;
       this.httpsServer = Https.createServer(options, app);
@@ -85,7 +96,7 @@ class NodeHttpServer {
       Logger.log(`Node Media Http Server started on port: ${this.port}`);
     });
 
-    this.httpServer.on('error', (e) => {
+    this.httpServer.on('error', e => {
       Logger.error(`Node Media Http Server ${e}`);
     });
 
@@ -103,7 +114,7 @@ class NodeHttpServer {
     this.wsServer.on('listening', () => {
       Logger.log(`Node Media WebSocket Server started on port: ${this.port}`);
     });
-    this.wsServer.on('error', (e) => {
+    this.wsServer.on('error', e => {
       Logger.error(`Node Media WebSocket Server ${e}`);
     });
 
@@ -112,7 +123,7 @@ class NodeHttpServer {
         Logger.log(`Node Media Https Server started on port: ${this.sport}`);
       });
 
-      this.httpsServer.on('error', (e) => {
+      this.httpsServer.on('error', e => {
         Logger.error(`Node Media Https Server ${e}`);
       });
 
@@ -128,9 +139,11 @@ class NodeHttpServer {
       });
 
       this.wssServer.on('listening', () => {
-        Logger.log(`Node Media WebSocketSecure Server started on port: ${this.sport}`);
+        Logger.log(
+          `Node Media WebSocketSecure Server started on port: ${this.sport}`
+        );
       });
-      this.wssServer.on('error', (e) => {
+      this.wssServer.on('error', e => {
         Logger.error(`Node Media WebSocketSecure Server ${e}`);
       });
     }
@@ -145,7 +158,8 @@ class NodeHttpServer {
 
     context.nodeEvent.on('doneConnect', (id, args) => {
       let session = context.sessions.get(id);
-      let socket = session instanceof NodeFlvSession ? session.req.socket : session.socket;
+      let socket =
+        session instanceof NodeFlvSession ? session.req.socket : session.socket;
       context.stat.inbytes += socket.bytesRead;
       context.stat.outbytes += socket.bytesWritten;
     });
@@ -167,8 +181,7 @@ class NodeHttpServer {
   onConnect(req, res) {
     let session = new NodeFlvSession(this.config, req, res);
     session.run();
-
   }
 }
 
-module.exports = NodeHttpServer
+module.exports = NodeHttpServer;

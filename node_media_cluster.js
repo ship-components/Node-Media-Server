@@ -18,16 +18,16 @@ class NodeMediaCluster {
     if (cluster.isMaster) {
       Logger.log(`Master ${process.pid} is running`);
 
-      const messageHandler = (msg) => {
+      const messageHandler = msg => {
         for (let id in cluster.workers) {
           cluster.workers[id].send(msg);
         }
-      }
+      };
 
       const newWorker = () => {
         let worker = cluster.fork();
         worker.on('message', messageHandler);
-      }
+      };
 
       for (let i = 0; i < this.config.cluster.num; i++) {
         newWorker();
@@ -37,7 +37,6 @@ class NodeMediaCluster {
         Logger.log(`worker ${worker.process.pid} died`);
         newWorker();
       });
-
     } else {
       this.nms = new NodeMediaServer(this.config);
       this.nms.run();
@@ -56,8 +55,6 @@ class NodeMediaCluster {
       this.nms.stop();
     }
   }
-
 }
 
-
-module.exports = NodeMediaCluster
+module.exports = NodeMediaCluster;

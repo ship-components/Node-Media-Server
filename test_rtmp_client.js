@@ -14,9 +14,9 @@ rc.on('script', (scriptData, timestamp) => {
   rp.pushScript(scriptData, timestamp);
 });
 
-rc.on('status', (info) => {
+rc.on('status', info => {
   console.log('player on status', info);
-  if(info.code === 'NetStream.Play.UnpublishNotify') {
+  if (info.code === 'NetStream.Play.UnpublishNotify') {
     rc.stop();
   }
 });
@@ -31,7 +31,7 @@ rp.on('close', () => {
   rc.stop();
 });
 
-rp.on('status', (info) => {
+rp.on('status', info => {
   console.log('publisher on status', info);
   if (info.code === 'NetStream.Publish.Start') {
     rc.startPull();
@@ -39,4 +39,3 @@ rp.on('status', (info) => {
 });
 
 rp.startPush();
-

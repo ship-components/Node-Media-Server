@@ -7,14 +7,13 @@
 const OS = require('os');
 
 function cpuAverage() {
-
   //Initialise sum of idle and time of cores and fetch CPU info
-  let totalIdle = 0, totalTick = 0;
+  let totalIdle = 0,
+    totalTick = 0;
   let cpus = OS.cpus();
 
   //Loop through CPU cores
   for (let i = 0, len = cpus.length; i < len; i++) {
-
     //Select CPU core
     let cpu = cpus[i];
 
@@ -32,7 +31,7 @@ function cpuAverage() {
 }
 
 function percentageCPU() {
-  return new Promise(function (resolve, reject) {
+  return new Promise(function(resolve, reject) {
     let startMeasure = cpuAverage();
     setTimeout(() => {
       let endMeasure = cpuAverage();
@@ -41,7 +40,7 @@ function percentageCPU() {
       let totalDifference = endMeasure.total - startMeasure.total;
 
       //Calculate the average percentage CPU usage
-      let percentageCPU = 100 - ~~(100 * idleDifference / totalDifference);
+      let percentageCPU = 100 - ~~((100 * idleDifference) / totalDifference);
       resolve(percentageCPU);
     }, 100);
   });
@@ -56,7 +55,7 @@ function getSessionsInfo(sessions) {
     ws: 0,
   };
 
-  for(let session of sessions.values()) {
+  for (let session of sessions.values()) {
     let socket = session.TAG === 'rtmp' ? session.socket : session.req.socket;
     info.inbytes += socket.bytesRead;
     info.outbytes += socket.bytesWritten;
@@ -68,10 +67,9 @@ function getSessionsInfo(sessions) {
   return info;
 }
 
-
 function getInfo(req, res, next) {
   let s = this.sessions;
-  percentageCPU().then((cpuload) => {
+  percentageCPU().then(cpuload => {
     let sinfo = getSessionsInfo(s);
     let info = {
       os: {
@@ -87,7 +85,7 @@ function getInfo(req, res, next) {
       },
       mem: {
         totle: OS.totalmem(),
-        free: OS.freemem()
+        free: OS.freemem(),
       },
       net: {
         inbytes: this.stat.inbytes + sinfo.inbytes,
@@ -96,7 +94,7 @@ function getInfo(req, res, next) {
       nodejs: {
         uptime: Math.floor(process.uptime()),
         version: process.version,
-        mem: process.memoryUsage()
+        mem: process.memoryUsage(),
       },
       clients: {
         accepted: this.stat.accepted,
@@ -104,7 +102,7 @@ function getInfo(req, res, next) {
         idle: this.idlePlayers.size,
         rtmp: sinfo.rtmp,
         http: sinfo.http,
-        ws: sinfo.ws
+        ws: sinfo.ws,
       },
     };
     res.json(info);
