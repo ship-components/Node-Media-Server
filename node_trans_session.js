@@ -19,9 +19,13 @@ class NodeTransSession extends EventEmitter {
 
   run() {
     let vc = 'copy';
-    let ac = this.conf.args.ac == 10 ? 'copy' : this.conf.ac ? this.conf.ac : 'aac';
+    let ac =
+      this.conf.args.ac == 10 ? 'copy' : this.conf.ac ? this.conf.ac : 'aac';
     let inPath = 'rtmp://127.0.0.1:' + this.conf.port + this.conf.streamPath;
-    let directory = typeof this.conf.directory === 'string' ? this.conf.directory : `${this.conf.mediaroot}/${this.conf.app}`;
+    let directory =
+      typeof this.conf.directory === 'string'
+        ? this.conf.directory
+        : `${this.conf.mediaroot}/${this.conf.app}`;
     let ouPath = `${directory}/${this.conf.stream}`;
     let mapStr = '';
     if (this.conf.mp4) {
@@ -30,39 +34,90 @@ class NodeTransSession extends EventEmitter {
       let mp4FileName = this.conf.stream + '.mp4';
       let mapMp4 = `${this.conf.mp4Flags}${ouPath}/${mp4FileName}|`;
       mapStr += mapMp4;
-      Logger.log('[Transmuxing MP4] ' + this.conf.streamPath + ' to ' + ouPath + '/' + mp4FileName);
+      Logger.log(
+        '[Transmuxing MP4] ' +
+          this.conf.streamPath +
+          ' to ' +
+          ouPath +
+          '/' +
+          mp4FileName
+      );
     }
     if (this.conf.hls) {
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
       let hlsFileName = 'index.m3u8';
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
-      Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
+      Logger.log(
+        '[Transmuxing HLS] ' +
+          this.conf.streamPath +
+          ' to ' +
+          ouPath +
+          '/' +
+          hlsFileName
+      );
     }
     if (this.conf.dash) {
       this.conf.dashFlags = this.conf.dashFlags ? this.conf.dashFlags : '';
       let dashFileName = 'index.mpd';
       let mapDash = `${this.conf.dashFlags}${ouPath}/${dashFileName}`;
       mapStr += mapDash;
-      Logger.log('[Transmuxing DASH] ' + this.conf.streamPath + ' to ' + ouPath + '/' + dashFileName);
+      Logger.log(
+        '[Transmuxing DASH] ' +
+          this.conf.streamPath +
+          ' to ' +
+          ouPath +
+          '/' +
+          dashFileName
+      );
     }
     mkdirp.sync(ouPath);
-    let argv = ['-y', '-threads', 1, '-loglevel', 'warning', '-hide_banner', '-nostats', '-nostdin', '-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-g', 1, '-tune', 'zerolatency', '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
+    let argv = [
+      '-y',
+      '-threads',
+      1,
+      '-loglevel',
+      'warning',
+      '-hide_banner',
+      '-nostats',
+      '-nostdin',
+      '-fflags',
+      'nobuffer',
+      '-analyzeduration',
+      '1000000',
+      '-i',
+      inPath,
+      '-c:v',
+      vc,
+      '-c:a',
+      ac,
+      '-g',
+      1,
+      '-tune',
+      'zerolatency',
+      '-f',
+      'tee',
+      '-map',
+      '0:a?',
+      '-map',
+      '0:v?',
+      mapStr,
+    ];
     Logger.log('[ffmpeg args] ffmpeg ', argv.join(' '));
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
-    this.ffmpeg_exec.on('error', (e) => {
+    this.ffmpeg_exec.on('error', e => {
       Logger.error(e);
     });
 
-    this.ffmpeg_exec.stdout.on('data', (data) => {
+    this.ffmpeg_exec.stdout.on('data', data => {
       Logger.debug(data.toString());
     });
 
-    this.ffmpeg_exec.stderr.on('data', (data) => {
+    this.ffmpeg_exec.stderr.on('data', data => {
       Logger.warn(data.toString());
     });
 
-    this.ffmpeg_exec.on('close', (code) => {
+    this.ffmpeg_exec.on('close', code => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
     });
