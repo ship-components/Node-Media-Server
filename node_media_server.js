@@ -24,7 +24,7 @@ class NodeMediaServer {
         Logger[key] = config.logger[key].bind(config.logger);
       });
       Logger.log = config.logger.info.bind(config.logger);
-      Logger.ffmpeg = config.logger.info.bind(config.logger);
+      Logger.ffdebug = config.logger.info.bind(config.logger);
     }
   }
 
