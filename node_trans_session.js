@@ -60,19 +60,44 @@ class NodeTransSession extends EventEmitter {
       Logger.log('[Transmuxing DASH] ' + this.conf.streamPath + ' to ' + ouPath + '/' + dashFileName);
     }
     mkdirp.sync(ouPath);
-    let argv = ['-y', '-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
-    Logger.ffdebug(argv.toString());
+    let argv = [
+      '-loglevel',
+      'error',
+      '-nostdin',
+      '-hide_banner',
+      '-nostats',
+      '-y',
+      '-fflags',
+      'nobuffer',
+      '-analyzeduration',
+      '1000000',
+      '-i',
+      inPath,
+      '-c:v',
+      vc,
+      '-c:a',
+      ac,
+      '-f',
+      'tee',
+      '-map',
+      '0:a?',
+      '-map',
+      '0:v?',
+      mapStr
+    ];
+    Logger.info('[ffmpeg] %s %s', this.conf.ffmpeg, argv.join(' '));
+
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
-      Logger.ffdebug(e);
+      Logger.error(e);
     });
 
     this.ffmpeg_exec.stdout.on('data', (data) => {
-      Logger.ffdebug(`FF输出：${data}`);
+      Logger.info(`[ffmpeg] ${data.toString().trim()}`);
     });
 
     this.ffmpeg_exec.stderr.on('data', (data) => {
-      Logger.ffdebug(`FF输出：${data}`);
+      Logger.error(`[ffmpeg] ${data.toString().trim()}`);
     });
 
     this.ffmpeg_exec.on('close', (code) => {
