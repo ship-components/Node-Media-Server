@@ -17,16 +17,30 @@ class NodeTransSession extends EventEmitter {
     this.conf = conf;
   }
 
+  /**
+   * Smartly tries to resovle the directory where
+   * the video should be stored
+   */
+  getDirectory() {
+    if (typeof this.conf.directory === 'function') {
+      return this.conf.directory(this.conf);
+    } else if (typeof this.conf.directory === 'string') {
+      return `${this.conf.directory}/${this.conf.stream}`;
+    } else {
+      return `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}`;
+    }
+  }
+
   run() {
     let vc = 'copy';
     let ac = this.conf.args.ac == 10 ? 'copy' : this.conf.ac ? this.conf.ac : 'aac';
     let inPath = 'rtmp://127.0.0.1:' + this.conf.port + this.conf.streamPath;
-    let ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}`;
+    let ouPath = this.getDirectory();
     let mapStr = '';
     if (this.conf.mp4) {
       this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';
       let now = new Date();
-      let mp4FileName = dateFormat('yyyy-mm-dd-HH-MM') + '.mp4';
+      let mp4FileName = this.conf.stream + '.mp4';
       let mapMp4 = `${this.conf.mp4Flags}${ouPath}/${mp4FileName}|`;
       mapStr += mapMp4;
       Logger.log('[Transmuxing MP4] ' + this.conf.streamPath + ' to ' + ouPath + '/' + mp4FileName);
@@ -46,42 +60,74 @@ class NodeTransSession extends EventEmitter {
       Logger.log('[Transmuxing DASH] ' + this.conf.streamPath + ' to ' + ouPath + '/' + dashFileName);
     }
     mkdirp.sync(ouPath);
-    let argv = ['-y', '-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
-    Logger.ffdebug(argv.toString());
+    let argv = [
+      '-loglevel',
+      'error',
+      '-nostdin',
+      '-hide_banner',
+      '-nostats',
+      '-y',
+      '-fflags',
+      'nobuffer',
+      '-analyzeduration',
+      '1000000',
+      '-i',
+      inPath,
+      '-timeout',
+      '10',
+      '-c:v',
+      vc,
+      '-c:a',
+      ac,
+      '-preset',
+      this.conf.preset || 'veryfast',
+      '-g',
+      '1',
+      '-f',
+      'tee',
+      '-map',
+      '0:a?',
+      '-map',
+      '0:v?',
+      mapStr
+    ];
+    Logger.info('[ffmpeg] %s %s', this.conf.ffmpeg, argv.join(' '));
+
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
-      Logger.ffdebug(e);
+      Logger.error(e);
     });
 
     this.ffmpeg_exec.stdout.on('data', (data) => {
-      Logger.ffdebug(`FF输出：${data}`);
+      Logger.info(`[ffmpeg] ${data.toString().trim()}`);
     });
 
     this.ffmpeg_exec.stderr.on('data', (data) => {
-      Logger.ffdebug(`FF输出：${data}`);
+      Logger.error(`[ffmpeg] ${data.toString().trim()}`);
     });
 
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
-      fs.readdir(ouPath, function (err, files) {
-        if (!err) {
-          files.forEach((filename) => {
-            if (filename.endsWith('.ts')
-              || filename.endsWith('.m3u8')
-              || filename.endsWith('.mpd')
-              || filename.endsWith('.m4s')) {
-              fs.unlinkSync(ouPath + '/' + filename);
-            }
-          })
-        }
-      });
+      if (this.conf.removeOnExit) {
+        fs.readdir(ouPath, function (err, files) {
+          if (!err) {
+            files.forEach((filename) => {
+              if (filename.endsWith('.ts')
+                || filename.endsWith('.m3u8')
+                || filename.endsWith('.mpd')
+                || filename.endsWith('.m4s')) {
+                fs.unlinkSync(ouPath + '/' + filename);
+              }
+            })
+          }
+        });
+      }
     });
   }
 
   end() {
-    // this.ffmpeg_exec.kill('SIGINT');
-    this.ffmpeg_exec.stdin.write('q');
+    this.ffmpeg_exec.kill('SIGTERM');
   }
 }
 

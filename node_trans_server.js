@@ -44,7 +44,7 @@ class NodeTransServer {
     Logger.log(`Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${this.config.http.mediaroot}`);
   }
 
-  onPostPublish(id, streamPath, args) {
+  onPostPublish(id, streamPath, args, callback) {
     let regRes = /\/(.*)\/(.*)/gi.exec(streamPath);
     let [app, stream] = _.slice(regRes, 1);
     let i = this.config.trans.tasks.length;
@@ -61,6 +61,7 @@ class NodeTransServer {
         this.transSessions.set(id, session);
         session.on('end', () => {
           this.transSessions.delete(id);
+          callback();
         });
         session.run();
       }
