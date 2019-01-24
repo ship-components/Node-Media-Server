@@ -77,6 +77,8 @@ class NodeTransSession extends EventEmitter {
       vc,
       '-c:a',
       ac,
+      '-preset',
+      this.conf.preset || 'veryfast',
       '-f',
       'tee',
       '-map',
