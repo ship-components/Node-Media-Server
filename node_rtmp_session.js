@@ -5,6 +5,7 @@
 //
 
 const QueryString = require('querystring');
+const buffer = require('buffer');
 const AV = require('./node_core_av');
 const { AUDIO_SOUND_RATE, AUDIO_CODEC_NAME, VIDEO_CODEC_NAME } = require('./node_core_av');
 
@@ -352,10 +353,18 @@ class NodeRtmpSession {
     chunksOffset += chunkBasicHeader.length;
     chunkMessageHeader.copy(chunks, chunksOffset);
     chunksOffset += chunkMessageHeader.length;
-    if (useExtendedTimestamp) {
+
+    // See https://github.com/illuspas/Node-Media-Server/issues/123
+    const isOutofRange = (header.timestamp + chunksOffset) > buffer.constants.MAX_LENGTH;
+    if (isOutofRange) {
+      Logger.warn('header.timestamp is out of range of buffer -> header.timestamp = %s', header.timestamp + chunksOffset);
+    }
+
+    if (useExtendedTimestamp && !isOutofRange) {
       chunks.writeUInt32BE(header.timestamp, chunksOffset);
       chunksOffset += 4;
     }
+
     while (payloadSize > 0) {
       if (payloadSize > chunkSize) {
         payload.copy(chunks, chunksOffset, payloadOffset, payloadOffset + chunkSize);
