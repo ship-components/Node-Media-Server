@@ -73,6 +73,8 @@ class NodeTransSession extends EventEmitter {
       '1000000',
       '-i',
       inPath,
+      '-timeout',
+      '10',
       '-c:v',
       vc,
       '-c:a',
