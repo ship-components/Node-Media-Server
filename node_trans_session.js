@@ -17,11 +17,25 @@ class NodeTransSession extends EventEmitter {
     this.conf = conf;
   }
 
+  /**
+   * Smartly tries to resovle the directory where
+   * the video should be stored
+   */
+  getDirectory() {
+    if (typeof this.conf.directory === 'function') {
+      return this.conf.directory(this.conf);
+    } else if (typeof this.conf.directory === 'string') {
+      return `${this.conf.directory}/${this.conf.stream}`;
+    } else {
+      return `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}`;
+    }
+  }
+
   run() {
     let vc = 'copy';
     let ac = this.conf.args.ac == 10 ? 'copy' : this.conf.ac ? this.conf.ac : 'aac';
     let inPath = 'rtmp://127.0.0.1:' + this.conf.port + this.conf.streamPath;
-    let ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}`;
+    let ouPath = this.getDirectory();
     let mapStr = '';
     if (this.conf.mp4) {
       this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';
