@@ -203,7 +203,7 @@ class NodeRtmpSession {
         clearInterval(this.pingInterval);
         this.pingInterval = null;
       }
-      
+
       if (!this.isIPC) {
         Logger.log(`[rtmp disconnect] id=${this.id}`);
         context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
@@ -623,7 +623,7 @@ class NodeRtmpSession {
     let rtmpChunks = this.rtmpChunksCreate(packet);
     let flvTag = NodeFlvSession.createFlvTag(packet);
 
-    //cache gop 
+    //cache gop
     if (this.rtmpGopCacheQueue != null) {
       if (this.aacSequenceHeader != null && payload[1] === 0) {
         //skip aac sequence header
@@ -695,7 +695,7 @@ class NodeRtmpSession {
     let flvTag = NodeFlvSession.createFlvTag(packet);
 
 
-    //cache gop 
+    //cache gop
     if ((codec_id == 7 || codec_id == 12) && this.rtmpGopCacheQueue != null) {
       if (frame_type == 1 && payload[1] == 1) {
         this.rtmpGopCacheQueue.clear();
@@ -986,13 +986,25 @@ class NodeRtmpSession {
     this.publishStreamPath = '/' + this.appname + '/' + invokeMessage.streamName.split('?')[0];
     this.publishArgs = QueryString.parse(invokeMessage.streamName.split('?')[1]);
     this.publishStreamId = this.parserPacket.header.stream_id;
-    if (!this.isIPC) {
-      context.nodeEvent.emit('prePublish', this.id, this.publishStreamPath, this.publishArgs);
-    }
     if (!this.isStarting) {
       return;
     }
 
+    if (!this.isIPC) {
+      context.nodeEvent.emit('prePublish', this.id, this.publishStreamPath, this.publishArgs, (err) => {
+        if (err) {
+          Logger.error(err);
+          this.stop();
+          return;
+        }
+        this.afterPrePublish();
+      });
+    } else {
+      this.afterPrePublish();
+    }
+  }
+
+  afterPrePublish() {
     if (this.config.auth && this.config.auth.publish && !this.isLocal && !this.isIPC) {
       let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
       if (!results) {
@@ -1030,7 +1042,6 @@ class NodeRtmpSession {
           context.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
         }
       }, 200);//200毫秒后基本上能得到音视频编码信息，这时候再发出事件，便于转码器做判断
-
     }
   }
 
