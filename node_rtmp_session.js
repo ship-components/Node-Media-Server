@@ -188,6 +188,9 @@ class NodeRtmpSession {
   }
 
   stop() {
+    clearTimeout(this.healthcheckInitialTimeout);
+    clearInterval(this.healthcheckInterval);
+
     if (this.isStarting) {
       this.isStarting = false;
 
@@ -1005,6 +1008,19 @@ class NodeRtmpSession {
   }
 
   afterPrePublish() {
+    if (!this.isIPC) {
+      // Wait to start the healthcheck because we assume it
+      // starts healthly.
+      this.healthcheckInitialTimeout = setTimeout(() => {
+
+        // Start a poll to let external apps know we're still going
+        this.healthcheckInterval = setInterval(this.onHealthcheck.bind(this), 2000);
+
+        // Cleanup
+        delete this.healthcheckInitialTimeout;
+      }, 2000);
+    }
+
     if (this.config.auth && this.config.auth.publish && !this.isLocal && !this.isIPC) {
       let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
       if (!results) {
@@ -1043,6 +1059,10 @@ class NodeRtmpSession {
         }
       }, 200);//200毫秒后基本上能得到音视频编码信息，这时候再发出事件，便于转码器做判断
     }
+  }
+
+  onHealthcheck() {
+    context.nodeEvent.emit('healthcheck', this.id);
   }
 
   onPlay(invokeMessage) {
