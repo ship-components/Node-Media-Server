@@ -1,5 +1,5 @@
 {
-  "name": "node-media-server",
+  "name": "ship-components-media-server",
   "version": "1.2.3-rc2",
   "description": "A Node.js implementation of RTMP Server",
   "main": "index.js",
