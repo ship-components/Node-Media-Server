@@ -64,18 +64,20 @@ class NodeTransSession extends EventEmitter {
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
-      fs.readdir(ouPath, function (err, files) {
-        if (!err) {
-          files.forEach((filename) => {
-            if (filename.endsWith('.ts')
-              || filename.endsWith('.m3u8')
-              || filename.endsWith('.mpd')
-              || filename.endsWith('.m4s')) {
-              fs.unlinkSync(ouPath + '/' + filename);
-            }
-          })
-        }
-      });
+      if (this.conf.removeOnExit) {
+        fs.readdir(ouPath, function (err, files) {
+          if (!err) {
+            files.forEach((filename) => {
+              if (filename.endsWith('.ts')
+                || filename.endsWith('.m3u8')
+                || filename.endsWith('.mpd')
+                || filename.endsWith('.m4s')) {
+                fs.unlinkSync(ouPath + '/' + filename);
+              }
+            })
+          }
+        });
+      }
     });
   }
 
