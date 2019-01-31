@@ -11,6 +11,43 @@ const dateFormat = require('dateformat');
 const mkdirp = require('mkdirp');
 const fs = require('fs');
 
+/**
+ * Either takes an array or a string that we
+ * turn into an array that spawn can accept
+ * @param   {Mixed} val
+ * @returns {String[]}
+ */
+function parseFlags(val) {
+  if(Array.isArray(val)) {
+    return val;
+  } else if (typeof val === 'string') {
+    return val.split(' ');
+  } else {
+    return [];
+  }
+}
+
+/**
+ * Attempts to evaluate the val if its a function
+ * otherwise if its a string accept it. Lastly
+ * if there neither of the above two matched
+ * fallback to a string. This should let users
+ * pass in custom functions to dyamically configure
+ * the filename
+ * @param {String|Function} val               Filename
+ * @param {Object}          conf              Transcoding options
+ * @param {String}          defaultValue      Default value
+ */
+function evaluateArgument(val, conf, defaultValue) {
+  if (typeof val === 'function') {
+    return val(conf);
+  } else if (typeof val === 'string') {
+    return val;
+  } else {
+    return defaultValue;
+  }
+}
+
 class NodeTransSession extends EventEmitter {
   constructor(conf) {
     super();
@@ -32,68 +69,107 @@ class NodeTransSession extends EventEmitter {
   }
 
   run() {
-    let vc = 'copy';
+    let vc =  this.conf.vc ? this.conf.vc : 'copy';
     let ac = this.conf.args.ac == 10 ? 'copy' : this.conf.ac ? this.conf.ac : 'aac';
     let inPath = 'rtmp://127.0.0.1:' + this.conf.port + this.conf.streamPath;
     let ouPath = this.getDirectory();
-    let mapStr = '';
-    if (this.conf.mp4) {
-      this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';
-      let now = new Date();
-      let mp4FileName = this.conf.stream + '.mp4';
-      let mapMp4 = `${this.conf.mp4Flags}${ouPath}/${mp4FileName}|`;
-      mapStr += mapMp4;
-      Logger.log('[Transmuxing MP4] ' + this.conf.streamPath + ' to ' + ouPath + '/' + mp4FileName);
-    }
-    if (this.conf.hls) {
-      this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
-      let hlsFileName = 'index.m3u8';
-      let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
-      mapStr += mapHls;
-      Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
-    }
-    if (this.conf.dash) {
-      this.conf.dashFlags = this.conf.dashFlags ? this.conf.dashFlags : '';
-      let dashFileName = 'index.mpd';
-      let mapDash = `${this.conf.dashFlags}${ouPath}/${dashFileName}`;
-      mapStr += mapDash;
-      Logger.log('[Transmuxing DASH] ' + this.conf.streamPath + ' to ' + ouPath + '/' + dashFileName);
-    }
-    mkdirp.sync(ouPath);
-    let argv = [
+
+    let argv = [];
+
+    // Global
+    argv = argv.concat([
+      '-threads',
+      (this.conf.threads || 0).toString(),
       '-loglevel',
-      'error',
+      this.conf.loglevel || 'error',
       '-nostdin',
       '-hide_banner',
       '-nostats',
       '-y',
-      '-fflags',
-      'nobuffer',
       '-analyzeduration',
-      '1000000',
+      (this.conf.analyzeduration || 1000000).toString(),
+    ]);
+
+    // Input
+    if (this.conf.inputFlags) {
+      this.conf.inputFlags = parseFlags(this.conf.inputFlags);
+      argv = argv.concat(this.conf.inputFlags);
+    }
+    argv = argv.concat([
       '-i',
       inPath,
       '-timeout',
-      '10',
+      '30',
       '-c:v',
       vc,
       '-c:a',
-      ac,
-      '-preset',
-      this.conf.preset || 'veryfast',
-      '-g',
-      '1',
-      '-f',
-      'tee',
-      '-map',
-      '0:a?',
-      '-map',
-      '0:v?',
-      mapStr
-    ];
+      ac
+    ]);
+
+    // Output
+    if (this.conf.outputFlags) {
+      this.conf.outputFlags = parseFlags(this.conf.outputFlags);
+      argv = argv.concat(this.conf.outputFlags);
+    }
+
+    // MP4
+    if (typeof this.conf.mp4 === 'object' && this.conf.mp4 !== null && this.conf.mp4.enabled !== false) {
+      const flags = parseFlags(this.conf.mp4.flags);
+      const filename = `${ouPath}/${evaluateArgument(this.conf.mp4.filename, this.conf, 'index.mp4')}`;
+
+      argv.push(
+        '-map',
+        '0:a?',
+        '-map',
+        '0:v?'
+      );
+      argv = argv.concat(flags);
+      argv.push('-f', 'mp4', filename);
+
+      Logger.log('[Transmuxing MP4] ' + this.conf.streamPath + ' to ' + filename);
+    }
+
+    // HLS
+    if (typeof this.conf.hls === 'object' && this.conf.hls !== null && this.conf.hls.enabled !== false) {
+      const flags = parseFlags(this.conf.hls.flags);;
+      const filename = `${ouPath}/${evaluateArgument(this.conf.hls.filename, this.conf, 'index.m3u8')}`;
+
+      argv.push(
+        '-map',
+        '0:a?',
+        '-map',
+        '0:v?'
+      );
+      argv = argv.concat(flags);
+      argv.push('-f', 'hls', filename);
+
+      Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + filename);
+    }
+
+    // DASH
+    if (typeof this.conf.dash === 'object' && this.conf.dash !== null && this.conf.dash.enabled !== false) {
+      const flags = parseFlags(this.conf.dash.flags);
+      const filename = `${ouPath}/${evaluateArgument(this.conf.dash.filename, this.conf, 'index.mpd')}`;
+
+      argv.push(
+        '-map',
+        '0:a?',
+        '-map',
+        '0:v?'
+      );
+      argv = argv.concat(flags);
+      argv.push('-f', 'dash', filename);
+
+      Logger.log('[Transmuxing DASH] ' + this.conf.streamPath + ' to ' + filename);
+    }
+    mkdirp.sync(ouPath);
+
     Logger.info('[ffmpeg] %s %s', this.conf.ffmpeg, argv.join(' '));
 
-    this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
+    this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv, {
+      shell: true
+    });
+
     this.ffmpeg_exec.on('error', (e) => {
       Logger.error(e);
     });
@@ -103,7 +179,7 @@ class NodeTransSession extends EventEmitter {
     });
 
     this.ffmpeg_exec.stderr.on('data', (data) => {
-      Logger.error(`[ffmpeg] ${data.toString().trim()}`);
+      Logger.warn(`[ffmpeg] ${data.toString().trim()}`);
     });
 
     this.ffmpeg_exec.on('close', (code) => {
