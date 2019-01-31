@@ -10,6 +10,7 @@ const { spawn } = require('child_process');
 const dateFormat = require('dateformat');
 const mkdirp = require('mkdirp');
 const fs = require('fs');
+const os = require('os');
 
 /**
  * Either takes an array or a string that we
@@ -170,8 +171,28 @@ class NodeTransSession extends EventEmitter {
       shell: true
     });
 
+    const logFile = evaluateArgument(this.conf.logFile, this.conf);
+    let log = null;
+    if (typeof logFile === 'string') {
+      Logger.info('[ffmpeg] Writing log to %s', logFile);
+      // Open file in append mode
+      log = fs.createWriteStream(logFile , {
+        flags: 'a'
+      });
+      log.write(`[${new Date().toISOString()}] Starting trancoding session on ${os.hostname()} for ${this.conf.stream}\n`);
+      log.write(`[${new Date().toISOString()}] Settings\n${JSON.stringify(this.conf, null, 2)}\n`);
+      log.write(`[${new Date().toISOString()}] ${this.conf.ffmpeg} ${argv.join(' ')}\n`);
+      // Capture stdout and stderr
+      ['stderr', 'stdout'].forEach((std) => {
+        this.ffmpeg_exec[std].pipe(log);
+      });
+    }
+
     this.ffmpeg_exec.on('error', (e) => {
       Logger.error(e);
+      if (log) {
+        log.write(`[${new Date().toISOString()}][ERROR]${e.toString()}\n`);
+      }
     });
 
     this.ffmpeg_exec.stdout.on('data', (data) => {
