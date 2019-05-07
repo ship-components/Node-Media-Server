@@ -1024,7 +1024,7 @@ class NodeRtmpSession {
       this.healthcheckInitialTimeout = setTimeout(() => {
 
         // Start a poll to let external apps know we're still going
-        this.healthcheckInterval = setInterval(this.onHealthcheck.bind(this), 2000);
+        this.healthcheckInterval = setInterval(this.onHealthcheck.bind(this), this.config.rtmp.healthCheckInterval || 10000);
 
         // Cleanup
         delete this.healthcheckInitialTimeout;
