@@ -6,6 +6,7 @@
 
 const QueryString = require('querystring');
 const buffer = require('buffer');
+const fs = require('fs');
 const AV = require('./node_core_av');
 const { AUDIO_SOUND_RATE, AUDIO_CODEC_NAME, VIDEO_CODEC_NAME } = require('./node_core_av');
 
@@ -15,6 +16,8 @@ const NodeCoreUtils = require('./node_core_utils');
 const NodeFlvSession = require('./node_flv_session');
 const context = require('./node_core_ctx');
 const Logger = require('./node_core_logger');
+
+const AWS = require('aws-sdk');
 
 const N_CHUNK_STREAM = 8;
 const RTMP_VERSION = 3;
@@ -1017,6 +1020,75 @@ class NodeRtmpSession {
     }
   }
 
+  getDirectory() {
+    if (typeof this.config.directory === 'function') {
+      return this.config.directory(this.config);
+    } else if (typeof this.config.directory === 'string') {
+      return `${this.config.directory}/${this.config.stream}`;
+    } else {
+      return `${this.config.mediaroot}/${this.config.app}/${this.config.stream}`;
+    }
+  }
+
+
+  uploadToCDN(s3, bucketName, keyName, filePath, callback) {
+    return new Promise((resolve, reject) => {
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.once('error', reject);
+      // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property
+      s3.upload(
+        {
+          Bucket: bucketName,
+          Key: keyName,
+          Body: fileStream,
+        },
+        callback
+      );
+    });
+  }
+
+  cdnUpload(CeresConfig, s3) {
+
+    Logger.log('[rtmp publish] accessKeyId', CeresConfig.aws.accessKeyId);
+
+    let i = this.config.trans.tasks.length;
+    let directories = [];
+    while (i--) {
+      directories[i] = this.config.trans.tasks[i].directory({ mediaroot: this.config.http.mediaroot, stream: this.publishStreamPath.replace('/videos/', '') });
+    }
+
+    directories.forEach(directory => {
+      Logger.log('[rtmp publish] directory', directory);
+
+      let filenames = fs.readdirSync(directory);
+
+      let filesToUpload = filenames.filter(function (filename) { return filename.match(/.+(\.mpd|\.ts|\.m3u8|\.m4s)$/ig); });
+      Logger.log('[rtmp publish] manifest files to upload', filesToUpload);
+
+
+      if (filesToUpload.length === 0) {
+        Logger.log('[rtmp publish] Unable to find files to upload');
+        this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadConnection', 'Unable to find files to upload');
+      }
+      filesToUpload.forEach(fileName => {
+        const keyName = `videos/${directory}/${fileName}`;
+        const filePath = path.join(directory, fileName);
+        Logger.log('[rtmp publish] Uploading file to CDN:', keyName);
+        uploadToCDN(s3, CeresConfig.aws.cloudfrontBucketName, keyName, filePath, 
+          (err, data) => {
+            if (err) {
+              Logger.log('[rtmp publish] Unable upload ', filePath)
+            } else {
+              Logger.log('[rtmp publish] File uploaded to CDN:', data.Location);
+            }
+          }
+        );
+      }
+      );
+    });
+
+  }
+
   afterPrePublish() {
     if (!this.isIPC) {
       // Wait to start the healthcheck because we assume it
@@ -1029,6 +1101,18 @@ class NodeRtmpSession {
         // Cleanup
         delete this.healthcheckInitialTimeout;
       }, 2000);
+
+      const CeresConfig = require('/opt/watch/conf/live.json');
+      const s3 = new AWS.S3({
+        accessKeyId: Ceres.config.aws.accessKeyId,
+        secretAccessKey: Ceres.config.aws.secretAccessKey,
+      });
+      if (['us-west.devship', 'jp.ppship', 'jp.ship'].includes(CeresConfig.env)) {
+        this.cdnUploadInterval = setInterval(() => {
+          this.cdnUpload(CeresConfig, s3);
+
+        }, this.cdnUploadInterval || 10000);
+      };
     }
 
     if (this.config.auth && this.config.auth.publish && !this.isLocal && !this.isIPC) {
