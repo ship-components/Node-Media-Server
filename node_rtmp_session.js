@@ -7,6 +7,7 @@
 const QueryString = require('querystring');
 const buffer = require('buffer');
 const fs = require('fs');
+const path = require('path');
 const AV = require('./node_core_av');
 const { AUDIO_SOUND_RATE, AUDIO_CODEC_NAME, VIDEO_CODEC_NAME } = require('./node_core_av');
 
@@ -1071,10 +1072,10 @@ class NodeRtmpSession {
         this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadConnection', 'Unable to find files to upload');
       }
       filesToUpload.forEach(fileName => {
-        const keyName = `videos/${directory}/${fileName}`;
+        const keyName = `${this.publishStreamPath.replace('/videos/', 'videos/')}/${fileName}`;
         const filePath = path.join(directory, fileName);
         Logger.log('[rtmp publish] Uploading file to CDN:', keyName);
-        uploadToCDN(s3, CeresConfig.aws.cloudfrontBucketName, keyName, filePath, 
+        this.uploadToCDN(s3, CeresConfig.aws.cloudfrontBucketName, keyName, filePath, 
           (err, data) => {
             if (err) {
               Logger.log('[rtmp publish] Unable upload ', filePath)
@@ -1104,8 +1105,8 @@ class NodeRtmpSession {
 
       const CeresConfig = require('/opt/watch/conf/live.json');
       const s3 = new AWS.S3({
-        accessKeyId: Ceres.config.aws.accessKeyId,
-        secretAccessKey: Ceres.config.aws.secretAccessKey,
+        accessKeyId: CeresConfig.aws.accessKeyId,
+        secretAccessKey: CeresConfig.aws.secretAccessKey,
       });
       if (['us-west.devship', 'jp.ppship', 'jp.ship'].includes(CeresConfig.env)) {
         this.cdnUploadInterval = setInterval(() => {
