@@ -1048,18 +1048,16 @@ class NodeRtmpSession {
       );
   }
 
-  cdnUpload(CeresConfig, s3) {
-    let i = this.config.trans.tasks.length;
+  cdnUpload(s3) {
     let directories = [];
-    while (i--) {
+    let i;
+    for (i = 0; i < this.config.trans.tasks.length; i++) {
       if (this.publishStreamPath.length > 0) {
         directories[i] = this.config.trans.tasks[i].directory({ mediaroot: this.config.http.mediaroot, stream: this.publishStreamPath.replace('/videos/', '') });  
       }
     }
 
     directories.forEach(directory => {
-      Logger.log('[rtmp publish] directory', directory);
-
       // TODO look for index.mpd, master.m3u8, chunk-streamx-xxxxx.m4s directly instead
       let filenames = fs.readdirSync(directory);
       let manifestFilesToUpload = filenames.filter(function (filename) { return filename.match(/.+(\.mpd|\.m3u8)$/ig); });
@@ -1069,28 +1067,25 @@ class NodeRtmpSession {
         return filename.match(/.+(\.ts|\.m4s)$/ig) && !this.chunkFilesUploadedToCdn.includes(filename);
       }.bind(this));
 
-      // track uploaded files
+      // track uploaded chunk files
       this.chunkFilesUploadedToCdn = this.chunkFilesUploadedToCdn.concat(chunkFilesToUpload);
 
       let filesToUpload = manifestFilesToUpload.concat(chunkFilesToUpload);
 
-      Logger.log('[rtmp publish] manifest files to upload', filesToUpload);
-
-      // TODO Is this really an error condition? Maybe need an "initialized" variable
-      if ( /* initialized && */ filesToUpload.length === 0) {
-        Logger.log('[rtmp publish] Unable to find files to upload');
-        this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadConnection', 'Unable to find files to upload');
-      }
+      // if ( /* initialized && */ filesToUpload.length === 0) {
+      //   Logger.log('[rtmp publish] No files to upload');
+      //   this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadConnection', 'Unable to find files to upload');
+      // }
       filesToUpload.forEach(fileName => {
         const keyName = `${this.publishStreamPath.replace('/videos/', 'videos/')}/${fileName}`;
         const filePath = path.join(directory, fileName);
-        Logger.log('[rtmp publish] Uploading file to CDN:', keyName);
+        // Logger.log('[rtmp publish] Uploading file to CDN:', keyName);
 
         setTimeout(() => {
-          this.uploadToCDN(s3, CeresConfig.aws.cloudfrontBucketName, keyName, filePath,
+          this.uploadToCDN(s3, this.aws.cloudfrontBucketName, keyName, filePath,
             (err, data) => {
               if (err) {
-                Logger.log('[rtmp publish] Unable upload ', filePath)
+                Logger.log('[rtmp publish] Unable to upload to CDN:', filePath)
               } else {
                 Logger.log('[rtmp publish] File uploaded to CDN:', data.Location);
               }
@@ -1116,16 +1111,15 @@ class NodeRtmpSession {
         delete this.healthcheckInitialTimeout;
       }, 2000);
 
-      const CeresConfig = require('/opt/watch/conf/live.json');
       const s3 = new AWS.S3({
-        accessKeyId: CeresConfig.aws.accessKeyId,
-        secretAccessKey: CeresConfig.aws.secretAccessKey,
+        accessKeyId: this.aws.accessKeyId,
+        secretAccessKey: this.aws.secretAccessKey,
       });
-      if (['us-west.devship', 'jp.ppship', 'jp.ship'].includes(CeresConfig.env)) {
+      if (['us-west.devship', 'jp.ppship', 'jp.ship'].includes(this.env)) {
         this.cdnUploadInterval = setInterval(() => {
-          this.cdnUpload(CeresConfig, s3);
+          this.cdnUpload(s3);
 
-        }, this.cdnUploadInterval || 1000);
+        }, this.cdnUploadInterval || 2000);
       };
     }
 
