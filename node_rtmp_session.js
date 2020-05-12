@@ -180,7 +180,7 @@ class NodeRtmpSession {
 
     this.players = new Set();
 
-    this.chunkFilesUploadedToCdn = [];
+    this.filesUploadedToCdn = [];
 
     context.sessions.set(this.id, this);
   }
@@ -1048,7 +1048,7 @@ class NodeRtmpSession {
       );
   }
 
-  cdnUpload(s3) {
+  uploadFilesToCDN(s3) {
     let directories = [];
     let i;
     for (i = 0; i < this.config.trans.tasks.length; i++) {
@@ -1063,14 +1063,14 @@ class NodeRtmpSession {
       let manifestFilesToUpload = filenames.filter(function (filename) { return filename.match(/.+(\.mpd|\.m3u8)$/ig); });
 
       // filter out previously uploaded files
-      let chunkFilesToUpload = filenames.filter(function (filename) {
-        return filename.match(/.+(\.ts|\.m4s)$/ig) && !this.chunkFilesUploadedToCdn.includes(filename);
+      let otherFilesToUpload = filenames.filter(function (filename) {
+        return filename.match(/.+(\.ts|\.m4s|\.jpeg)$/ig) && !this.filesUploadedToCdn.includes(filename);
       }.bind(this));
 
       // track uploaded chunk files
-      this.chunkFilesUploadedToCdn = this.chunkFilesUploadedToCdn.concat(chunkFilesToUpload);
+      this.filesUploadedToCdn = this.filesUploadedToCdn.concat(otherFilesToUpload);
 
-      let filesToUpload = manifestFilesToUpload.concat(chunkFilesToUpload);
+      let filesToUpload = manifestFilesToUpload.concat(otherFilesToUpload);
 
       // if ( /* initialized && */ filesToUpload.length === 0) {
       //   Logger.log('[rtmp publish] No files to upload');
@@ -1117,7 +1117,7 @@ class NodeRtmpSession {
       });
       if (['us-west.devship', 'jp.ppship', 'jp.ship'].includes(this.env)) {
         this.cdnUploadInterval = setInterval(() => {
-          this.cdnUpload(s3);
+          this.uploadFilesToCDN(s3);
 
         }, this.cdnUploadInterval || 2000);
       };
